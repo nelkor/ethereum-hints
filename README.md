@@ -308,3 +308,35 @@ const deployContract = async () => {
 
 deployContract().catch(error => console.log('error:', error))
 ```
+
+### Запросы к смарт-контракту
+
+```javascript
+// Тот же самый abi, что и в предыдущем примере кода
+const contract = new ethers.Contract(contractAddress, abi, provider)
+// Подключаем контракт к онлайн-кошельку
+const contractWithWallet = contract.connect(wallet)
+
+const readOwner = async () => {
+  // Прочитать публичное поле можно без транзакции, так что используем contract.
+  const owner = await contract['owner']()
+
+  console.log('owner:', owner)
+}
+
+const withdraw = async () => {
+  const amount = 1_000_000_000_000_000n // 0.001 ETH
+
+  // Чтобы вызвать метод, используем contractWithWallet, ибо нужна транзакция.
+  // Числовой параметр передаём обязательно в виде строки.
+  const response = await contractWithWallet['withdraw'](amount.toString())
+
+  console.log('transaction hash:', response.hash)
+
+  const receipt = await provider.waitForTransaction(response.hash)
+
+  console.log('receipt:', receipt)
+}
+
+readOwner().then(withdraw).catch(error => console.log(error.message))
+```
