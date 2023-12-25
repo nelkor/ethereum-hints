@@ -186,7 +186,7 @@ wallet
     console.log('receipt:', receipt)
   })
   .catch(error => {
-    console.log('error:', error)
+    console.log('error:', error.message)
   })
 ```
 
@@ -338,5 +338,44 @@ const withdraw = async () => {
   console.log('receipt:', receipt)
 }
 
-readOwner().then(withdraw).catch(error => console.log(error.message))
+readOwner().then(withdraw).catch(error => console.log('error:', error.message))
+```
+
+## Токены ERC20
+
+### Управление USDT
+
+ERC20 является перечнем требований к смарт-контрактам, выпускающим токены.
+Если смарт-контракт выполняет эти требования, он является ERC20.
+В качестве примера рассматриваем USDT.
+
+[USDT на Etherscan](https://etherscan.io/token/0xdac17f958d2ee523a2206206994597c13d831ec7)
+
+Адрес контракта USDT: `0xdAC17F958D2ee523a2206206994597C13D831ec7`.
+ABI можно найти на вкладке `Contract`.
+
+**В качестве адреса для хранения таких токенов используем наш адрес Ethereum.**
+Отправить транзакцию токенов ERC20 на другой адрес можно следующим образом:
+
+```javascript
+// Создаём контракт, передав 3-м аргументом кошелёк, так как будет транзакция.
+const contract = new ethers.Contract(contractAddress, abi, wallet)
+
+// У каждого ERC20-токена "количество знаков после запятой" может быть разным.
+// У USDT 6 знаков после запятой.
+// Чтобы отправить 100 баксов, необходимо выполнить следующее преобразование.
+const amount = ethers.parseUnits('100', 6)
+
+// Метод transfer является стандартным методом ERC20.
+// Принимает адрес получателя и количество.
+contract['transfer'](recipientAddress, amount)
+  .then(response => {
+    console.log('transaction hash:', response.hash)
+
+    return provider.waitForTransaction(response.hash)
+  })
+  .then(receipt => {
+    console.log('receipt:', receipt)
+  })
+  .catch(error => console.log('error:', error.message))
 ```
