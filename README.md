@@ -379,3 +379,34 @@ contract['transfer'](recipientAddress, amount)
   })
   .catch(error => console.log('error:', error.message))
 ```
+
+## Восстановление публичного ключа
+
+Напрямую из адреса получить публичный ключ невозможно, зато можно это сделать
+из данных любой исходящей транзакции. Соответственно, невозможно узнать
+публичный ключ адреса, с которого не было исходящих транзакций.
+
+```javascript
+import { JsonRpcProvider, Transaction, computeAddress } from 'ethers'
+
+// В качестве примера возьмём транзакцию из сети Avalanche.
+// Вручную находим любую транзакцию в обозревателе и берём её хеш.
+const txHash =
+  '0x0fcb2da8459222cce1aef7dbff39b4f073a078df344cb8f404b4346bfe52bddf'
+
+// Получаем провайдер по URL.
+const provider = new JsonRpcProvider('https://api.avax.network/ext/bc/C/rpc')
+
+provider
+  .getTransaction(txHash) // Запрашиваем данные транзакции из блокчейна.
+  .then(txResponse => {
+    // На основе полученных данных создаём объект транзакции.
+    // В этом объекте есть поле "fromPublicKey" — публичный ключ адреса.
+    const { fromPublicKey } = Transaction.from(txResponse)
+
+    // Выводим искомый ключ. Также выведем адрес, который высчитывается
+    // из этого публичного ключа. И сравним с адресом из транзакции.
+    console.log(fromPublicKey)
+    console.log(computeAddress(fromPublicKey))
+  })
+```
